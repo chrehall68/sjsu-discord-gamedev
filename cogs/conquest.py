@@ -10,3 +10,7 @@ class Conquest(commands.Cog):
         await ctx.channel.send(
             f"Sorry {ctx.author}, Conquest is still under construction."
         )
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Conquest(bot))
