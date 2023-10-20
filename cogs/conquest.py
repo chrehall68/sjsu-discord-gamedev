@@ -1,18 +1,18 @@
 from discord.ext import commands
 import discord
-
+from bot.gamecomponents import Tile, Village, Army
 
 class Plot:
     def __init__(self, size: int = 10) -> None:
         self.width = size
         self.height = size
         self.vals = [
-            [":green_square:" for _ in range(self.width)] for _ in range(self.height)
+            [Tile(x, y) for x in range(self.width)] for y in range(self.height)
         ]
 
     def toEmbed(self) -> discord.Embed:
         embed = discord.Embed(title="Plot")
-        embed.description = "\n".join(map(lambda row: "".join(row), self.vals))
+        embed.description = "\n".join(map(lambda row: "".join(map(lambda tile: tile.display(), row)), self.vals))
         return embed
 
 
@@ -45,11 +45,27 @@ class Conquest(commands.Cog):
     @commands.command(name="claim")
     async def claim(self, ctx: commands.Context, row: int, col: int):
         if ctx.guild.id in self.plots:
-            self.plots[ctx.guild.id].vals[row][col] = ":homes:"
+            tile = self.plots[ctx.guild.id].vals[row][col]
+            tile.claim(ctx.author.id)
+            tile.village = Village(tile, "Center")
             await self.view(ctx)
         else:
             await ctx.send("Nope not initialized")
 
+    @commands.command(name="view-tile")
+    async def viewTile(self, ctx: commands.Context, row: int, col: int):
+        if ctx.guild.id in self.plots:
+            tile = self.plots[ctx.guild.id].vals[row][col]
+            e = discord.Embed(title=f"Tile ({tile.x}, {tile.y})")
+            e.description = tile.description(self.bot)
+            await ctx.send(embed=e)
+        else:
+            await ctx.send("Plot not initialized")
+
+    ''''@commands.command(name="test-id")
+    async def testId(self, ctx: commands.Context):
+        user = self.bot.get_user(ctx.author.id)
+        await ctx.send(user.display_name)'''
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Conquest(bot))
